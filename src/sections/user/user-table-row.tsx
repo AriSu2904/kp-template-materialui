@@ -1,61 +1,63 @@
-
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
+import Typography from '@mui/material/Typography';
 
 // ----------------------------------------------------------------------
 
 export type UserProps = {
   id: string;
-  name: string;
-  role: string;
+  firstName: string;
+  lastName: string;
+  nik: string;
+  phone: string;
   status: string;
-  company: string;
-  avatarUrl: string;
-  isVerified: boolean;
+  basicTest: number;
+  mathTest: number;
+  codingTest: number;
 };
 
 type UserTableRowProps = {
   row: UserProps;
   onSelectRow: () => void;
+  loading: boolean;
 };
 
-export function UserTableRow({ row }: UserTableRowProps) {
+export function UserTableRow({ row, onSelectRow, loading = false }: UserTableRowProps) {
   return (
     <TableRow hover tabIndex={-1}>
+      <TableCell>
+        <Typography variant="subtitle2">{row.firstName}</Typography>
+      </TableCell>
 
-        <TableCell component="th" scope="row">
-          <Box
-            sx={{
-              gap: 2,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Avatar alt={row.name} src={row.avatarUrl} />
-            {row.name}
-          </Box>
-        </TableCell>
+      <TableCell>
+        <Typography variant="subtitle2">{row.lastName}</Typography>
+      </TableCell>
 
-        <TableCell>{row.company}</TableCell>
+      <TableCell>{row.nik}</TableCell>
 
-        <TableCell>{row.role}</TableCell>
+      <TableCell>{row.phone}</TableCell>
 
-        <TableCell align="center">
-          {row.isVerified ? (
-            <Iconify width={22} icon="solar:check-circle-bold" sx={{ color: 'success.main' }} />
-          ) : (
-            '-'
-          )}
-        </TableCell>
+      <TableCell>
+          {row.status === 'PENDING' ? 'Belum ditentukan' : row.status}
+      </TableCell>
 
-        <TableCell>
-          <Label color={(row.status === 'banned' && 'error') || 'success'}>{row.status}</Label>
-        </TableCell>
-      </TableRow>
+      <TableCell align="center">{row.basicTest}</TableCell>
+
+      <TableCell align="center">{row.mathTest}</TableCell>
+
+      <TableCell align="center">{row.codingTest}</TableCell>
+
+      <TableCell align="center">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onSelectRow}
+          disabled={row.status !== 'PENDING' || loading}
+        >
+          {loading ? 'Predicting...': 'Predict'}
+        </Button>
+      </TableCell>
+    </TableRow>
   );
 }

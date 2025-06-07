@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
+import { useQuery, useMutation } from '@apollo/client';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -8,8 +10,6 @@ import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 
-import { _users } from 'src/_mock';
-
 import { Scrollbar } from 'src/components/scrollbar';
 
 import { TableNoData } from '../table-no-data';
@@ -17,18 +17,98 @@ import { UserTableRow } from '../user-table-row';
 import { UserTableHead } from '../user-table-head';
 import { TableEmptyRows } from '../table-empty-rows';
 import { emptyRows, applyFilter, getComparator } from '../utils';
+import { SINGLE_PREDICTION } from '../../../graphql/MLPrediction';
+import { QUERY_LIST_CANDIDATES } from '../../../graphql/listCandidates';
 
-import type { UserProps } from '../user-table-row';
-
-// ----------------------------------------------------------------------
+import type { UserProps} from '../user-table-row';
 
 export function UserView() {
   const table = useTable();
-
   const [filterName, setFilterName] = useState('');
+  const [candidates, setCandidates] = useState<UserProps[]>([]);
+  const [loadingPredictId, setLoadingPredictId] = useState<string | null>(null);
+
+
+  const { loading, data: candidatesData, error } = useQuery(QUERY_LIST_CANDIDATES, {
+    context: {
+      headers: {
+        'authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    },
+  });
+
+  const [singlePredict, { loading: mutationLoading }] = useMutation(SINGLE_PREDICTION, {
+    context: {
+      headers: {
+        'authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    },
+  });
+
+  // Update state ketika data dari query didapatkan
+  useEffect(() => {
+    if (candidatesData?.listCandidates) {
+      const mapped = candidatesData.listCandidates.map((item: any) => ({
+        id: item.nik,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        nik: item.nik,
+        phone: item.phone,
+        status: item.status,
+        basicTest: item.technicalScore.basicTest,
+        mathTest: item.technicalScore.mathTest,
+        codingTest: item.technicalScore.codingTest,
+      }));
+      setCandidates(mapped);
+    }
+  }, [candidatesData]);
+
+  const showPredictLoading = (firstName: string) => {
+    let timerInterval: any;
+    return Swal.fire({
+      title: `Memprediksi status kelulusan untuk ${firstName}`,
+      html: 'Forecasting in progress <b></b> milliseconds.',
+      timer: 2000,
+      timerProgressBar: true,
+      didOpen: () => {
+        Swal.showLoading();
+        const timer = Swal.getPopup()?.querySelector('b');
+        timerInterval = setInterval(() => {
+          if (timer) timer.textContent = `${Swal.getTimerLeft()}`;
+        }, 100);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      }
+    });
+  };
+
+  const handleSinglePredict = async (nik: string, firstName: string) => {
+    setLoadingPredictId(nik);
+
+    await showPredictLoading(firstName);
+
+    try {
+      const { data } = await singlePredict({ variables: { nik } });
+      const predictedStatus = data?.predictCandidate?.status ?? 'Unknown';
+
+      setCandidates((prev) =>
+        prev.map((candidate) =>
+          candidate.nik === nik ? { ...candidate, status: predictedStatus } : candidate
+        )
+      );
+    } catch (e) {
+      console.error('Prediction error:', e);
+      Swal.fire('Error', 'Terjadi kesalahan saat memprediksi.', 'error');
+    } finally {
+      setLoadingPredictId(null);
+      Swal.close(); // tutup Swal loading manual
+    }
+  };
+
 
   const dataFiltered: UserProps[] = applyFilter({
-    inputData: _users,
+    inputData: candidates,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
@@ -37,43 +117,38 @@ export function UserView() {
 
   return (
     <>
-      <Box
-        sx={{
-          mt: 5,
-          mb: 2,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
+      <Box sx={{ mt: 5, mb: 2, display: 'flex', alignItems: 'center' }}>
         <Typography variant="h4" sx={{ flexGrow: 1 }}>
           List Candidates
         </Typography>
       </Box>
 
       <Card>
-
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
               <UserTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={_users.length}
+                rowCount={candidates.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    _users.map((user) => user.id)
+                    candidates.map((user) => user.id)
                   )
                 }
                 headLabel={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'company', label: 'Company' },
-                  { id: 'role', label: 'Role' },
-                  { id: 'isVerified', label: 'Verified', align: 'center' },
+                  { id: 'firstName', label: 'First Name' },
+                  { id: 'lastName', label: 'Last Name' },
+                  { id: 'nik', label: 'NIK' },
+                  { id: 'phone', label: 'Phone' },
                   { id: 'status', label: 'Status' },
-                  {id: 'predict', label: 'predict'},
+                  { id: 'basicTest', label: 'Basic Test' },
+                  { id: 'mathTest', label: 'Math Test' },
+                  { id: 'codingTest', label: 'Coding Test' },
+                  { id: 'predictButton', label: 'ML Prediction' },
                 ]}
               />
               <TableBody>
@@ -86,13 +161,18 @@ export function UserView() {
                     <UserTableRow
                       key={row.id}
                       row={row}
-                      onSelectRow={() => table.onSelectRow(row.id)}
+                      loading={loadingPredictId === row.id}
+                      onSelectRow={() => handleSinglePredict(row.id, row.firstName)}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
+                  emptyRows={emptyRows(
+                    table.page,
+                    table.rowsPerPage,
+                    candidates.length
+                  )}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -104,22 +184,21 @@ export function UserView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={_users.length}
+          count={candidates.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
-      </>
+    </>
   );
 }
 
-// ----------------------------------------------------------------------
-
+// hook untuk manajemen table
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('firstName');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

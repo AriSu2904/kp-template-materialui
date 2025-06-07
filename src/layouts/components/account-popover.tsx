@@ -29,6 +29,8 @@ export function AccountPopover({ sx, ...other }: AccountPopoverProps) {
 
 
   const handleSignOut = useCallback(() => {
+    localStorage.removeItem('nik');
+    localStorage.removeItem('token');
     router.push('/');
   }, [router]);
 

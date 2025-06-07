@@ -14,8 +14,11 @@ import LoginRequest from 'src/graphql/LoginRequest';
 
 import { Iconify } from 'src/components/iconify';
 
+import { ErrorAlert } from '../../components/sweet-alert';
+
 export function SignInView() {
   const router = useRouter();
+  const [isError, setIsError] = useState(false)
 
   const [signIn, { data, loading, error }] = useMutation(LoginRequest, {
     onCompleted: (response) => {
@@ -26,6 +29,7 @@ export function SignInView() {
       }
     },
     onError: (e) => {
+      setIsError(true);
       console.error('Login error:', e);
     },
   });
@@ -95,9 +99,7 @@ export function SignInView() {
       </Button>
 
       {error && (
-        <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-          {error.message}
-        </Typography>
+        <ErrorAlert open={isError} message={error.message} onClose={() => setIsError(false)} />
       )}
     </Box>
   );

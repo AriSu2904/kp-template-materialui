@@ -31,7 +31,7 @@ export function OverviewAnalyticsView() {
           <AnalyticsWidgetSummary
             title="New users"
             percent={-0.1}
-            total={1352831}
+            total={68}
             color="secondary"
             icon={<img alt="New users" src="/assets/icons/glass/ic-glass-users.svg" />}
             chart={{

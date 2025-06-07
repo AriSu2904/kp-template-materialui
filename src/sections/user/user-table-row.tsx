@@ -15,6 +15,7 @@ export type UserProps = {
   basicTest: number;
   mathTest: number;
   codingTest: number;
+  batch: string;
 };
 
 type UserTableRowProps = {

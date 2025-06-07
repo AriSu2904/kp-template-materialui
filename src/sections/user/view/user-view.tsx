@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
+import { MenuItem, Select } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
@@ -27,6 +28,7 @@ export function UserView() {
   const [filterName, setFilterName] = useState('');
   const [candidates, setCandidates] = useState<UserProps[]>([]);
   const [loadingPredictId, setLoadingPredictId] = useState<string | null>(null);
+  const [batchFilter, setBatchFilter] = useState('ALL');
 
 
   const { loading, data: candidatesData, error } = useQuery(QUERY_LIST_CANDIDATES, {
@@ -58,6 +60,7 @@ export function UserView() {
         basicTest: item.technicalScore.basicTest,
         mathTest: item.technicalScore.mathTest,
         codingTest: item.technicalScore.codingTest,
+        batch: item.batch
       }));
       setCandidates(mapped);
     }
@@ -106,21 +109,39 @@ export function UserView() {
     }
   };
 
+  const filteredByBatch = batchFilter === 'ALL'
+    ? candidates
+    : candidates.filter((c) => c.batch === batchFilter);
 
   const dataFiltered: UserProps[] = applyFilter({
-    inputData: candidates,
+    inputData: filteredByBatch,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
 
   const notFound = !dataFiltered.length && !!filterName;
 
+  const uniqueBatches = Array.from(new Set(candidates.map((c) => c.batch)))
+    .sort((a, b) => Number(a) - Number(b));
+
   return (
     <>
       <Box sx={{ mt: 5, mb: 2, display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h4" sx={{ flexGrow: 1 }}>
+        <Typography variant="h3" sx={{ flexGrow: 1 }}>
           List Candidates
         </Typography>
+        <Select value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+          <MenuItem value="ALL">
+            <Typography>All Batches</Typography>
+          </MenuItem>
+          {uniqueBatches.map((batch) => (
+            <MenuItem key={batch} value={batch}>
+              <Typography>Batch {batch}</Typography>
+            </MenuItem>
+          ))}
+        </Select>
+
+
       </Box>
 
       <Card>

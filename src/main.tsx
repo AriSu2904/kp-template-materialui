@@ -8,7 +8,7 @@ import { routesSection } from './routes/sections';
 import { ErrorBoundary } from './routes/components';
 
 const client = new ApolloClient({
-  uri: 'http://localhost:3001/graphql',
+  uri: 'http://host.docker.internal:3001/graphql',
   cache: new InMemoryCache(),
 });
 

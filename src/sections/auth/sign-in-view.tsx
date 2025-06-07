@@ -14,6 +14,7 @@ import LoginRequest from 'src/graphql/LoginRequest';
 
 import { Iconify } from 'src/components/iconify';
 
+import { mappingError } from '../../utils/format-error';
 import { ErrorAlert } from '../../components/sweet-alert';
 
 export function SignInView() {
@@ -30,7 +31,6 @@ export function SignInView() {
     },
     onError: (e) => {
       setIsError(true);
-      console.error('Login error:', e);
     },
   });
 
@@ -93,13 +93,17 @@ export function SignInView() {
         color="inherit"
         variant="contained"
         onClick={handleSignIn}
-        disabled={loading}
+        disabled={loading || (nik === '' || password === '')}
       >
         {loading ? 'Signing in...' : 'Sign in'}
       </Button>
 
       {error && (
-        <ErrorAlert open={isError} message={error.message} onClose={() => setIsError(false)} />
+        <ErrorAlert open={isError} message={mappingError(error)} onClose={() => {
+          setIsError(false);
+          setNik('');
+          setPassword('');
+        }} />
       )}
     </Box>
   );

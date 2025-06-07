@@ -1,16 +1,10 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
-import { useState, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 
 import Box from '@mui/material/Box';
-import Popover from '@mui/material/Popover';
-import MenuList from '@mui/material/MenuList';
 import ButtonBase from '@mui/material/ButtonBase';
-import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -29,8 +23,7 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
   );
 
   return (
-    <>
-      <ButtonBase
+    <ButtonBase
         disableRipple
         sx={{
           pl: 2,
@@ -62,6 +55,5 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
         </Box>
 
       </ButtonBase>
-    </>
   );
 }

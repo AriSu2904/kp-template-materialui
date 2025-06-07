@@ -9,8 +9,7 @@ import { RouterLink } from 'src/routes/components';
 
 export function NotFoundView() {
   return (
-    <>
-      <Container
+    <Container
         sx={{
           py: 10,
           flexGrow: 1,
@@ -43,6 +42,5 @@ export function NotFoundView() {
           Go Back
         </Button>
       </Container>
-    </>
   );
 }

@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useMutation } from '@apollo/client';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -11,18 +10,33 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks';
 
-import { Iconify } from 'src/components/iconify';
+import LoginRequest from 'src/graphql/LoginRequest';
 
-// ----------------------------------------------------------------------
+import { Iconify } from 'src/components/iconify';
 
 export function SignInView() {
   const router = useRouter();
 
+  const [signIn, { data, loading, error }] = useMutation(LoginRequest, {
+    onCompleted: (response) => {
+      if (response.loginToken) {
+        localStorage.setItem('nik', response.loginToken.nik);
+        localStorage.setItem('token', response.loginToken.token);
+        router.push('/dashboard');
+      }
+    },
+    onError: (e) => {
+      console.error('Login error:', e);
+    },
+  });
+
+  const [nik, setNik] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSignIn = useCallback(() => {
-    router.push('/dashboard');
-  }, [router]);
+  const handleSignIn = () => {
+    signIn({ variables: { nik, token: password } });
+  }
 
   const renderForm = (
     <Box
@@ -38,6 +52,9 @@ export function SignInView() {
         label="Employee Id"
         placeholder="NIK12345"
         sx={{ mb: 3 }}
+        value={nik}
+        onChange={(e) => setNik(e.target.value)}
+        autoComplete="off"
         slotProps={{
           inputLabel: { shrink: true },
         }}
@@ -48,6 +65,8 @@ export function SignInView() {
         name="password"
         label="Token"
         type={showPassword ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         slotProps={{
           inputLabel: { shrink: true },
           input: {
@@ -70,9 +89,16 @@ export function SignInView() {
         color="inherit"
         variant="contained"
         onClick={handleSignIn}
+        disabled={loading}
       >
-        Sign in
+        {loading ? 'Signing in...' : 'Sign in'}
       </Button>
+
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+          {error.message}
+        </Typography>
+      )}
     </Box>
   );
 

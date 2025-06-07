@@ -5,15 +5,11 @@ import Typography from '@mui/material/Typography';
 
 import { RouterLink } from 'src/routes/components';
 
-import { Logo } from 'src/components/logo';
-
 // ----------------------------------------------------------------------
 
 export function NotFoundView() {
   return (
     <>
-      <Logo sx={{ position: 'fixed', top: 20, left: 20 }} />
-
       <Container
         sx={{
           py: 10,
@@ -44,7 +40,7 @@ export function NotFoundView() {
         />
 
         <Button component={RouterLink} href="/" size="large" variant="contained" color="inherit">
-          Go to home
+          Go Back
         </Button>
       </Container>
     </>
